@@ -6,6 +6,8 @@
     <title>かわいいタイマーアプリ</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    <!-- 数字用の丸っこいフォントを追加 -->
+    <link href="https://fonts.googleapis.com/css2?family=Varela+Round&display=swap" rel="stylesheet">
     <style>
         /* 'Inter'フォントを使用 */
         body {
@@ -26,6 +28,11 @@
             background-color: #fff;
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
         }
+        /* タイマーの数字専用スタイル */
+        .timer-font {
+            font-family: 'Varela Round', sans-serif; /* 丸っこくて可愛いフォントに変更 */
+            font-variant-numeric: tabular-nums; /* 数字の幅を均等にする魔法 */
+        }
     </style>
 </head>
 <body class="min-h-screen flex items-center justify-center p-4">
@@ -33,11 +40,12 @@
         
         <!-- ヘッダー -->
         <h1 class="text-4xl font-bold text-center text-purple-600 mb-6 flex items-center justify-center">
-            🧸 ふわふわタイマー 💖
+            🧸 さささタイマー 💖
         </h1>
         
         <!-- タイマー表示 -->
-        <div id="timerDisplay" class="text-7xl sm:text-9xl font-extrabold text-center text-purple-700 bg-pink-200 p-8 sm:p-12 rounded-2xl mb-8 border-4 border-pink-400 select-none">
+        <!-- 修正箇所: flex items-center justify-center leading-none tabular-nums を追加 -->
+        <div id="timerDisplay" class="timer-font text-7xl sm:text-9xl font-extrabold text-purple-700 bg-pink-200 p-8 sm:p-12 rounded-2xl mb-8 border-4 border-pink-400 select-none flex items-center justify-center leading-none h-40 sm:h-56">
             00:00
         </div>
 
@@ -112,8 +120,7 @@
         // タイマー表示を更新する関数
         function updateDisplay() {
             timerDisplay.textContent = formatTime(remainingTime);
-            // 0になったらタイマー終了処理
-            // ★修正ポイント: タイマーが実行中(isRunning = true)の場合のみ stopTimer(true) を呼び出すように変更
+            
             if (remainingTime <= 0 && isRunning) {
                 stopTimer(true);
             }
@@ -121,34 +128,29 @@
 
         // タイマーを開始する関数
         function startTimer() {
-            if (isRunning && !isPaused) return; // 既に実行中の場合は何もしない
+            if (isRunning && !isPaused) return; 
 
-            // 停止状態からスタートする場合
             if (!isRunning) {
                 const minutes = parseInt(minutesInput.value) || 0;
                 const seconds = parseInt(secondsInput.value) || 0;
                 remainingTime = minutes * 60 + seconds;
             }
 
-            // 残り時間が0以下ならエラーメッセージを表示して終了
             if (remainingTime <= 0) {
                 showMessage('むきゅ〜！時間をセットしてね！', true);
                 return;
             }
 
-            // 状態更新
             isRunning = true;
             isPaused = false;
             
-            // UI更新
             startButton.disabled = true;
             pauseButton.disabled = false;
-            pauseButton.style.pointerEvents = 'auto'; // ポーズボタンを有効化
+            pauseButton.style.pointerEvents = 'auto'; 
             pauseButton.classList.remove('opacity-50');
-            inputArea.classList.add('hidden'); // 入力欄を非表示
-            showMessage('🚀 タイマー、むきゅ〜ってスタートしたよん！');
+            inputArea.classList.add('hidden'); 
+            showMessage('🚀 だらだらスタート～～！');
 
-            // 1秒ごとに実行
             intervalId = setInterval(() => {
                 remainingTime--;
                 updateDisplay();
@@ -164,12 +166,11 @@
             isRunning = true;
             isPaused = true;
 
-            // UI更新
             startButton.disabled = false;
             pauseButton.disabled = true;
-            pauseButton.style.pointerEvents = 'none'; // ポーズボタンを無効化
+            pauseButton.style.pointerEvents = 'none'; 
             pauseButton.classList.add('opacity-50');
-            showMessage('⏸️ ポーズ中... Mondayちゃん、ちょっとだらだらする？');
+            showMessage('⏸️ ポーズちう...');
         }
 
         // タイマーを停止/終了する関数
@@ -179,11 +180,9 @@
                 intervalId = null;
             }
             
-            // 状態リセット
             isRunning = false;
             isPaused = false;
             
-            // UI更新
             startButton.disabled = false;
             pauseButton.disabled = true;
             pauseButton.style.pointerEvents = 'none';
@@ -193,10 +192,8 @@
             if (finished) {
                 remainingTime = 0;
                 updateDisplay();
-                // 終了メッセージ
-                showMessage('🎉 タイムアップなの〜！✨ ゆぅかちゃん、おつかれさま！');
+                showMessage('🎉 タイムアップなの〜！おつかれさま！');
             } else {
-                // リセットの場合
                 remainingTime = 0;
                 updateDisplay();
                 minutesInput.value = 0;
@@ -205,12 +202,10 @@
             }
         }
 
-        // イベントリスナー設定
         startButton.addEventListener('click', startTimer);
         pauseButton.addEventListener('click', pauseTimer);
         resetButton.addEventListener('click', () => stopTimer(false));
 
-        // 初期表示をセット
         updateDisplay();
         
     </script>
