@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>かわいいタイマーアプリ（安全版）</title>
+    <title>かわいいタイマー（通知付き）</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Varela+Round&display=swap" rel="stylesheet">
@@ -71,7 +71,7 @@
         let isPaused = false;
         let audioCtx = null;
 
-        // 音声準備（エラーが起きても無視して進むように try-catch で囲みました）
+        // 音声の準備
         function initAudio() {
             try {
                 if (!audioCtx) {
@@ -81,7 +81,28 @@
                     audioCtx.resume();
                 }
             } catch (e) {
-                console.warn("オーディオの初期化に失敗しましたが、タイマーは動きます", e);
+                console.warn("Audio init failed", e);
+            }
+        }
+
+        // 通知の許可をもらう関数
+        function requestNotificationPermission() {
+            if (!("Notification" in window)) {
+                console.log("このブラウザは通知に対応していません");
+                return;
+            }
+            if (Notification.permission === "default") {
+                Notification.requestPermission();
+            }
+        }
+
+        // 実際に通知を出す関数
+        function showNotification() {
+            if (Notification.permission === "granted") {
+                const notification = new Notification("🧸 ふわタイマー", {
+                    body: "⏰ 時間になったよ〜！おつかれさま！",
+                    icon: "https://cdn-icons-png.flaticon.com/512/864/864685.png" // 汎用的な時計アイコン
+                });
             }
         }
 
@@ -95,23 +116,19 @@
                 oscillator.type = 'sine';
                 oscillator.frequency.setValueAtTime(880, audioCtx.currentTime);
                 oscillator.frequency.setValueAtTime(1760, audioCtx.currentTime + 0.2);
+                oscillator.frequency.setValueAtTime(880, audioCtx.currentTime + 0.4);
                 gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.5);
+                gainNode.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.8);
                 oscillator.start();
-                oscillator.stop(audioCtx.currentTime + 0.5);
-            } catch (e) {
-                console.error("音の再生に失敗しました", e);
-            }
+                oscillator.stop(audioCtx.currentTime + 0.8);
+            } catch (e) { console.error(e); }
         }
 
         function showMessage(text, isError = false) {
             messageBox.textContent = text;
             messageBox.className = 'mt-8 p-4 rounded-xl text-center font-medium';
-            if (isError) {
-                messageBox.classList.add('bg-red-100', 'text-red-700', 'block');
-            } else {
-                messageBox.classList.add('bg-purple-100', 'text-purple-700', 'block');
-            }
+            if (isError) messageBox.classList.add('bg-red-100', 'text-red-700', 'block');
+            else messageBox.classList.add('bg-purple-100', 'text-purple-700', 'block');
             setTimeout(() => { messageBox.classList.add('hidden'); }, 3000);
         }
 
@@ -119,6 +136,7 @@
             const minutes = Math.floor(remainingTime / 60);
             const seconds = remainingTime % 60;
             timerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            document.title = `${minutes}:${seconds.toString().padStart(2, '0')} - ふわタイマー`; // ブラウザのタブ名にも時間を表示
 
             if (remainingTime <= 0 && isRunning) {
                 stopTimer(true);
@@ -126,8 +144,8 @@
         }
 
         function startTimer() {
-            // 音声初期化を試みる
             initAudio();
+            requestNotificationPermission(); // スタート時に通知許可を求める
 
             if (isRunning && !isPaused) return;
 
@@ -137,7 +155,6 @@
                 remainingTime = m * 60 + s;
             }
 
-            // 【重要】時間が0のままスタートしていないかチェック
             if (remainingTime <= 0) {
                 showMessage('むきゅ〜！時間をセットしてね！', true);
                 return;
@@ -181,10 +198,13 @@
             pauseButton.classList.add('opacity-50', 'pointer-events-none');
             inputArea.classList.remove('hidden');
 
+            document.title = "ふわタイマー 💖"; // タブ名を戻す
+
             if (finished) {
                 remainingTime = 0;
                 updateDisplay(); 
-                playAlarmSound(); // 音を鳴らす
+                playAlarmSound(); 
+                showNotification(); // ここで通知を出す！
                 showMessage('🎉 時間になりました！');
                 setTimeout(() => { alert("⏰ 時間になりました！"); }, 100);
             } else {
